@@ -1,0 +1,7 @@
+---
+update: false
+archive_url: "https://apps.ren3.ai/downloads/rhel/server.tar.gz"
+archive_path: "{{ app_home }}/files/server.tar.gz"
+target_dir: "{{ app_home }}/server"
+backup_dir: "{{ app_home }}/oldfiles"
+service_name: "rn3bp-server.service"

@@ -1,0 +1,25 @@
+---
+- name: Deploy ej2apiservices Components
+  hosts: local
+  become: yes
+  vars_files:
+    - ../inventories/production/group_vars/all.yml
+
+  tasks:
+    - name: Include ej2apiservices role
+      include_role:
+        name: ej2apiservices
+
+    - name: Include quadrant role
+      include_role:
+        name: quadrant
+    
+    - name: Register product license
+      uri:
+        url: http://localhost:5000/license/register
+        method: POST
+        headers:
+          Content-Type: "application/json"
+        body_format: json
+        body:
+          licenseKey: "{{ license_key }}"

@@ -1,0 +1,9 @@
+- name: Update RN3 Server
+  hosts: local
+  become: true
+  vars_files:
+    - ../inventories/production/group_vars/all.yml
+  roles:
+    - role: update_server
+      vars:
+        update: true

@@ -1,0 +1,5 @@
+- import_playbook: deploy-web.yml
+- import_playbook: deploy-server.yml
+- import_playbook: deploy-ingestor.yml
+- import_playbook: deploy-ej2apiservices.yml
+- import_playbook: deploy-monitoring.yml

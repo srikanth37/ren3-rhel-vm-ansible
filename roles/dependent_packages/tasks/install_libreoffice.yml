@@ -1,0 +1,55 @@
+---
+- name: Install dependencies for LibreOffice
+  ansible.builtin.yum:
+    name:
+      - wget
+      - tar
+      - xz
+      - libXinerama
+      - libGLU
+      - openssl
+      - openssl-devel
+      - compat-openssl11
+      - nss
+      - nss-tools
+      - cairo
+      - libxslt
+      - cups-libs
+    state: present
+  become: true
+
+- name: Download LibreOffice archive
+  ansible.builtin.get_url:
+    url: https://apps.ren3.ai/downloads/rhel/LibreOffice_24.8.2_Linux_x86-64_rpm.tar.gz
+    dest: /tmp/LibreOffice.tar.gz
+    mode: '0644'
+
+- name: Extract LibreOffice archive
+  ansible.builtin.unarchive:
+    src: /tmp/LibreOffice.tar.gz
+    dest: /tmp/
+    remote_src: yes
+
+- name: Install LibreOffice RPMs in one transaction
+  shell: >
+    dnf install -y /tmp/LibreOffice_24.8.2.1_Linux_x86-64_rpm/RPMS/*.rpm --nogpgcheck
+
+- name: Set LibreOffice path in .bashrc
+  ansible.builtin.lineinfile:
+    path: ~/.bashrc
+    line: 'export PATH="/opt/libreoffice24.8/program/:$PATH"'
+    insertafter: EOF
+  become: true
+
+- name: Reload shell environment
+  ansible.builtin.shell: source ~/.bashrc
+  args:
+    executable: /bin/bash
+
+- name: Clean up LibreOffice archive
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /tmp/LibreOffice_24.8.2.1_Linux_x86-64_rpm
+    - /tmp/LibreOffice.tar.gz

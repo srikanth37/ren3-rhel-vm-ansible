@@ -1,0 +1,23 @@
+---
+- name: Deploy monitoring Components
+  hosts: local
+  become: yes
+  vars_files:
+    - ../inventories/production/group_vars/all.yml
+
+  tasks:
+    - name: Include telegraf role
+      include_role:
+        name: telegraf
+
+    - name: Include prometheus role
+      include_role:
+        name: prometheus
+    
+    - name: Include prometheus alertmanager role
+      include_role:
+        name: alertmanager
+
+    - name: Include grafana role
+      include_role:
+        name: grafana

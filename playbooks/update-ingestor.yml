@@ -1,0 +1,9 @@
+- name: Update RN3 Ingestor
+  hosts: local
+  become: true
+  vars_files:
+    - ../inventories/production/group_vars/all.yml
+  roles:
+    - role: update_ingestor
+      vars:
+        update: true

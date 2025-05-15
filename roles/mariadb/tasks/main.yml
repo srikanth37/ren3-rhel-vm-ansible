@@ -1,0 +1,60 @@
+---
+- name: Add MariaDB repository
+  get_url:
+    url: https://downloads.mariadb.com/MariaDB/mariadb_repo_setup
+    dest: /tmp/mariadb_repo_setup
+    mode: '0755'
+
+- name: Run MariaDB repository setup
+  command: /tmp/mariadb_repo_setup
+  args:
+    creates: /etc/yum.repos.d/mariadb.repo
+
+- name: Install MariaDB dependencies
+  dnf:
+    name:
+      - perl-DBI
+      - libaio
+      - libsepol
+      - lsof
+      - boost-program-options
+      - rsync
+      - liburing
+      - socat
+      - perl
+      - perl-Module-Load
+    state: present
+
+- name: Install MariaDB server
+  dnf:
+    name: MariaDB-server
+    enablerepo: mariadb-main
+    state: present
+
+- name: Start and enable MariaDB service
+  service:
+    name: mariadb
+    state: started
+    enabled: yes
+
+- name: Install PyMySQL for Ansible MySQL modules
+  ansible.builtin.dnf:
+    name: python3-PyMySQL
+    state: present
+
+- name: Set root password (using socket login)
+  community.mysql.mysql_user:
+    login_unix_socket: /var/lib/mysql/mysql.sock
+    name: root
+    password: "{{ mariadb_root_password }}"
+    host: localhost
+    priv: "*.*:ALL,GRANT"
+    check_implicit_admin: yes
+
+- name: Create databases
+  community.mysql.mysql_db:
+    login_user: root
+    login_password: "{{ mariadb_root_password }}"
+    name: "{{ item.name }}"
+    state: present
+  loop: "{{ mariadb_databases }}"

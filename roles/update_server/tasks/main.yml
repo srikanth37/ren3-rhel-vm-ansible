@@ -1,0 +1,65 @@
+---
+- name: Stop the server service
+  systemd:
+    name: "{{ service_name }}"
+    state: stopped
+    daemon_reload: yes
+
+- name: Conditionally download server build
+  when: update | bool
+  block:
+    - name: Download server archive
+      get_url:
+        url: "{{ archive_url }}"
+        dest: "{{ archive_path }}"
+        mode: '0644'
+
+- name: Backup existing server directory with timestamp
+  shell: |
+    timestamp=$(date +%Y-%m-%d_%H-%M-%S)
+    mkdir -p {{ backup_dir }}
+    cp -raf {{ target_dir }} {{ backup_dir }}/server-$timestamp
+  ignore_errors: true
+
+- name: Extract new server build
+  unarchive:
+    src: "{{ archive_path }}"
+    dest: "{{ target_dir }}"
+    remote_src: yes
+    extra_opts: [--strip-components=0]
+
+- name: Set ownership to appadmin
+  file:
+    path: "{{ target_dir }}"
+    state: directory
+    recurse: yes
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+
+- name: Enable and start the server service
+  systemd:
+    name: "{{ service_name }}"
+    enabled: yes
+    state: started
+    daemon_reload: yes
+
+- name: Wait for server to start (port 5000)
+  wait_for:
+    port: 5000
+    host: 127.0.0.1
+    timeout: 10
+    state: started
+
+- name: Perform healthcheck
+  uri:
+    url: http://localhost:5000/healthcheck
+    method: GET
+    return_content: yes
+    status_code: 200
+
+- name: Trigger DB creation
+  uri:
+    url: http://localhost:5000/dbcreator/create_db
+    method: GET
+    return_content: yes
+    status_code: 200

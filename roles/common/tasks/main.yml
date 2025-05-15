@@ -1,0 +1,119 @@
+---
+- name: Ensure user "{{ app_user }}" exists
+  ansible.builtin.user:
+    name: "{{ app_user }}"
+    state: present
+    shell: /bin/bash
+    create_home: yes
+    password: '*'
+    groups: ['wheel']
+    append: yes
+
+- name: Install required system packages
+  dnf:
+    name:
+      - wget
+      - unzip
+      - curl
+      - gettext
+      - librsvg2
+      - ghostscript
+      - less
+      - libgs
+      - gcc
+      - make
+      - rpm-build
+      - libpng-devel
+      - libjpeg-devel
+      - libtiff-devel
+      - gcc-c++
+      - bzip2
+      - bzip2-devel
+      - libtool
+      - freetype-devel
+      - libxml2-devel
+      - libX11-devel
+      - platform-python
+      - python3-libs
+    state: present
+
+- name: Create necessary directories
+  ansible.builtin.file:
+    path: "{{ app_home }}/{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - files
+    - oldfiles
+    - server
+    - ingestor
+    - web
+    - EJ2APIServices
+    - helper
+    - rn3-data
+    - output
+    - rn3-data/assets
+    - rn3-data/assets/audio
+    - rn3-data/assets/file
+    - rn3-data/configs
+    - rn3-data/configs/web
+    - rn3-data/configs/server
+    - rn3-data/configs/ingestor
+    - rn3-data/downloads
+    - rn3-data/downloads/sites
+    - rn3-data/downloads/sites/save
+    - rn3-data/temp
+    - rn3-data/tessdata
+  become: true
+
+- name: Copy web config.json file
+  ansible.builtin.template:
+    src: web-config.json
+    dest: "{{ app_home }}/rn3-data/configs/web/config.json"
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: '0755'
+  become: true
+
+- name: Copy server config.json file
+  ansible.builtin.template:
+    src: server-config.json
+    dest: "{{ app_home }}/rn3-data/configs/server/config.json"
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: '0755'
+  become: true
+
+- name: Copy ingestor config.json file
+  ansible.builtin.template:
+    src: web-config.json
+    dest: "{{ app_home }}/rn3-data/configs/ingestor/config.json"
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: '0755'
+  become: true
+
+- name: Set correct file permissions
+  ansible.builtin.file:
+    path: "{{ app_home }}"
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: '0755'
+    recurse: true
+  become: true
+
+- name: Download files archive
+  ansible.builtin.get_url:
+    url: "{{ app_server_url }}/files.tar.gz"
+    dest: /tmp/files.tar.gz
+  become: true
+
+- name: Extract files archive
+  ansible.builtin.unarchive:
+    src: /tmp/files.tar.gz
+    dest: "{{ app_home }}/files"
+    remote_src: yes
+  become: true
+
+- name: Install Node.js and NPM
+  import_tasks: install_node.yml

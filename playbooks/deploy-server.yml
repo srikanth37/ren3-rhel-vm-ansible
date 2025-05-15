@@ -1,0 +1,19 @@
+---
+- name: Deploy Server Components
+  hosts: local
+  become: yes
+  vars_files:
+    - ../inventories/production/group_vars/all.yml
+
+  tasks:
+    - name: Include dependent_packages role
+      include_role:
+        name: dependent_packages
+
+    - name: Include mariadb role
+      include_role:
+        name: mariadb
+
+    - name: Include server role
+      include_role:
+        name: server

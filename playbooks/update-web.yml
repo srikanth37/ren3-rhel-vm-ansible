@@ -1,0 +1,10 @@
+- name: update latest RN3 web build
+  hosts: local
+  become: true
+  vars_files:
+    - ../inventories/production/group_vars/all.yml
+  roles:
+    - role: update_web
+      vars:
+        update: true
+        client: "build"

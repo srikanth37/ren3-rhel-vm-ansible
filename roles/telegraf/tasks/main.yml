@@ -1,0 +1,52 @@
+- name: Install InfluxData repository (Telegraf)
+  ansible.builtin.shell: |
+    curl -s https://repos.influxdata.com/influxdata-archive.key | sudo gpg --dearmor -o /etc/pki/rpm-gpg/influxdata-archive.gpg
+    tee /etc/yum.repos.d/influxdata.repo > /dev/null <<EOF
+    [influxdata]
+    name = InfluxData Repository - RHEL
+    baseurl = https://repos.influxdata.com/rhel/7/x86_64/stable/
+    enabled = 1
+    gpgcheck = 1
+    gpgkey = file:///etc/pki/rpm-gpg/influxdata-archive.gpg
+    EOF
+  args:
+    executable: /bin/bash
+  become: true
+
+- name: Install Telegraf
+  ansible.builtin.yum:
+    name: telegraf
+    state: present
+
+- name: Ensure Telegraf config directory exists
+  ansible.builtin.file:
+    path: /opt/telegraf
+    state: directory
+    mode: '0755'
+
+- name: Deploy Telegraf config to /opt
+  ansible.builtin.template:
+    src: telegraf.conf.j2
+    dest: /opt/telegraf/telegraf.conf
+    mode: '0644'
+
+- name: Create systemd override directory for Telegraf
+  ansible.builtin.file:
+    path: /etc/systemd/system/telegraf.service.d
+    state: directory
+    mode: '0755'
+
+- name: Create Telegraf systemd override to use config from /opt
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/telegraf.service.d/override.conf
+    content: |
+      [Service]
+      ExecStart=
+      ExecStart=/usr/bin/telegraf --config /opt/telegraf/telegraf.conf
+
+- name: Reload systemd and restart Telegraf
+  ansible.builtin.systemd:
+    daemon_reload: true
+    name: telegraf
+    enabled: true
+    state: restarted

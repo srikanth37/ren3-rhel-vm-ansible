@@ -1,0 +1,58 @@
+---
+- name: Download ingestor archive
+  ansible.builtin.get_url:
+    url: "{{ app_server_url }}/ingestor.tar.gz"
+    dest: /tmp/ingestor.tar.gz
+  become: true
+
+- name: Extract ingestor archive
+  ansible.builtin.unarchive:
+    src: /tmp/ingestor.tar.gz
+    dest: "{{ app_home }}/ingestor/"
+    remote_src: yes
+  become: true
+
+- name: Copy .env file for ingestor
+  ansible.builtin.template:
+    src: .env
+    dest: "{{ app_home }}/ingestor/.env"
+    mode: '0755'
+  become: true
+
+- name: Copy systemd service files
+  ansible.builtin.copy:
+    src: "{{ app_home }}/files/{{ item }}"
+    dest: "/etc/systemd/system/{{ item }}"
+    mode: '0644'
+    remote_src: true
+  loop:
+    - rn3bp-ingestor.service
+  become: true
+
+- name: Set correct file permissions
+  ansible.builtin.file:
+    path: "{{ app_home }}/{{ item }}"
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: '0755'
+    recurse: true
+  loop:
+    - ingestor
+  become: true
+
+- name: Reload systemd daemon
+  systemd:
+    daemon_reload: yes
+
+- name: Enable and start ingestor service
+  systemd:
+    name: rn3bp-ingestor
+    state: started
+    enabled: yes
+
+- name: Ensure cron job is present to call processDocsCycle every minute
+  ansible.builtin.cron:
+    name: "Call processDocsCycle via curl"
+    minute: "*"
+    job: "curl http://localhost:5001/processDocsCycle"
+    user: root

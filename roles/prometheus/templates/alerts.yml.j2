@@ -1,0 +1,83 @@
+groups:
+  - name: web_service_alerts
+    rules:
+      - alert: WebServiceDown
+        expr: absent(web_healthcheck_http_response_code{service="web", status_code="200"})
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Web service is down (no 200 OK response)"
+
+  - name: server_service_alerts
+    rules:
+      - alert: ServerServiceDown
+        expr: absent(server_healthcheck_http_response_code{service="server", status_code="200"})
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Server service is down (no 200 OK response)"
+
+  - name: ingestor_service_alerts
+    rules:
+      - alert: IngestorServiceDown
+        expr: absent(ingestor_healthcheck_http_response_code{service="ingestor", status_code="200"})
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Ingestor service is down (no 200 OK response)"
+
+  - name: ej2apiservices_service_alerts
+    rules:
+      - alert: EJ2APIServiceDown
+        expr: absent(ej2apiservices_healthcheck_http_response_code{service="ej2apiservices", status_code="200"})
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "EJ2API service is down (no 200 OK response)"
+
+  - name: mariadb_alerts
+    rules:
+      - alert: MariaDBDown
+        expr: absent(mysql_uptime{service="mariadb"})
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "MariaDB is down"
+
+  - name: cpu_alerts
+    rules:
+      - alert: HighCPUUsage
+        expr: 100 - avg(cpu_usage_idle{cpu="cpu-total"}) by (host) > 90
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High CPU usage detected on"
+          description: "CPU usage is above 90% for more than 1 minutes on"
+
+  - name: memory_alerts
+    rules:
+      - alert: HighMemoryUsage
+        expr: avg(mem_used_percent) by (host) > 80
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High Memory usage detected on"
+          description: "Memory usage is above 80% for more than 1 minutes on"
+
+  - name: disk_alerts
+    rules:
+      - alert: HighDiskUsage
+        expr: disk_used_percent{path=~"/|/opt", fstype!="tmpfs", fstype!="devtmpfs"} > 90
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High Disk usage detected on"
+          description: "Disk usage is above 90% for more than 1 minutes on"

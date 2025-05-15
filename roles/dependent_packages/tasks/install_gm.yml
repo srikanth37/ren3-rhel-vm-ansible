@@ -1,0 +1,56 @@
+---
+- name: Install required dependencies for GraphicsMagick
+  ansible.builtin.yum:
+    name:
+      - gcc
+      - make
+      - libjpeg-devel
+      - libpng-devel
+      - libtiff-devel
+      - freetype-devel
+      - libtool
+      - ghostscript
+    state: present
+  become: true
+
+- name: Download GraphicsMagick source
+  ansible.builtin.get_url:
+    url: http://downloads.sourceforge.net/graphicsmagick/GraphicsMagick-1.3.36.tar.gz
+    dest: /tmp/GraphicsMagick-1.3.36.tar.gz
+    mode: '0644'
+
+- name: Extract GraphicsMagick source
+  ansible.builtin.unarchive:
+    src: /tmp/GraphicsMagick-1.3.36.tar.gz
+    dest: /tmp/
+    remote_src: yes
+
+- name: Configure GraphicsMagick
+  ansible.builtin.command: ./configure --enable-shared
+  args:
+    chdir: /tmp/GraphicsMagick-1.3.36
+  become: true
+
+- name: Compile GraphicsMagick
+  ansible.builtin.shell: |
+    cd /tmp/GraphicsMagick-1.3.36 && make -j$(nproc)
+  become: true
+  become_user: root
+
+- name: Install GraphicsMagick
+  ansible.builtin.command: make install
+  args:
+    chdir: /tmp/GraphicsMagick-1.3.36
+  become: true
+
+- name: Refresh shared library cache
+  ansible.builtin.command: ldconfig
+  become: true
+
+- name: Clean up source and archive
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - /tmp/GraphicsMagick-1.3.36
+    - /tmp/GraphicsMagick-1.3.36.tar.gz

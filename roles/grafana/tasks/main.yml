@@ -1,0 +1,73 @@
+- name: Download Grafana archive
+  ansible.builtin.get_url:
+    url: https://dl.grafana.com/oss/release/grafana-9.5.18.linux-amd64.tar.gz
+    dest: /tmp/grafana.tar.gz
+    mode: '0644'
+
+- name: Extract Grafana
+  ansible.builtin.unarchive:
+    src: /tmp/grafana.tar.gz
+    dest: /tmp
+    remote_src: yes
+
+- name: Move Grafana folder to /opt/grafana
+  ansible.builtin.copy:
+    src: /tmp/grafana-v9.5.18/
+    dest: /opt/grafana
+    mode: '0755'
+    remote_src: yes
+
+- name: Move Grafana binary to /usr/local/bin
+  ansible.builtin.copy:
+    src: /opt/grafana/bin/
+    dest: /usr/local/bin/
+    mode: '0755'
+    remote_src: yes
+
+- name: Ensure Grafana directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - /opt/grafana
+    - /opt/grafana/data
+    - /opt/grafana/log
+    - /opt/grafana/provisioning
+    - /opt/grafana/provisioning/datasources
+
+- name: Deploy Grafana datasource configuration to /opt/grafana/provisioning/datasources
+  ansible.builtin.template:
+    src: prometheus.yaml.j2
+    dest: /opt/grafana/provisioning/datasources/prometheus.yaml
+    mode: '0644'
+
+- name: Deploy Grafana configuration to /opt/grafana
+  ansible.builtin.template:
+    src: grafana.ini.j2
+    dest: /opt/grafana/grafana.ini
+    mode: '0644'
+
+- name: Create Grafana systemd unit using /opt
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/grafana.service
+    content: |
+      [Unit]
+      Description=Grafana
+      After=network.target
+
+      [Service]
+      ExecStart=/usr/local/bin/grafana-server \
+        --config=/opt/grafana/grafana.ini \
+        --homepath=/opt/grafana
+      Restart=always
+
+      [Install]
+      WantedBy=multi-user.target
+
+- name: Reload and start Grafana
+  ansible.builtin.systemd:
+    daemon_reload: true
+    name: grafana
+    enabled: true
+    state: started

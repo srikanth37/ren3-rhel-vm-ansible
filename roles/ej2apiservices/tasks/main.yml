@@ -1,0 +1,94 @@
+---
+- name: Create dotnet directory
+  ansible.builtin.file:
+    path: "{{ dotnet_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Download dotnet-install.sh
+  ansible.builtin.get_url:
+    url: https://dot.net/v1/dotnet-install.sh
+    dest: /tmp/dotnet-install.sh
+    mode: '0755'
+
+- name: Install .NET 6.0.33 runtime
+  ansible.builtin.command: >
+    /tmp/dotnet-install.sh
+    --version {{ dotnet_version }}
+    --runtime aspnetcore
+    --install-dir {{ dotnet_dir }}
+  environment:
+    DOTNET_ROOT: "{{ dotnet_dir }}"
+  args:
+    creates: "{{ dotnet_dir }}/dotnet"
+
+- name: Add DOTNET_ROOT and PATH to appadmin .bashrc
+  ansible.builtin.lineinfile:
+    path: /home/{{ app_user }}/.bashrc
+    line: "{{ item }}"
+    insertafter: EOF
+  loop:
+    - 'export DOTNET_ROOT={{ dotnet_dir }}'
+    - 'export PATH={{ dotnet_dir }}:$PATH'
+  become: true
+  become_user: "{{ app_user }}"
+
+- name: Add DOTNET_ROOT and PATH to root .bashrc
+  ansible.builtin.lineinfile:
+    path: /root/.bashrc
+    line: "{{ item }}"
+    insertafter: EOF
+  loop:
+    - 'export DOTNET_ROOT={{ dotnet_dir }}'
+    - 'export PATH={{ dotnet_dir }}:$PATH'
+
+- name: Symlink dotnet binary to /usr/bin
+  ansible.builtin.file:
+    src: "{{ dotnet_dir }}/dotnet"
+    dest: /usr/bin/dotnet
+    state: link
+    force: true
+
+- name: Download EJ2APIServices archive
+  ansible.builtin.get_url:
+    url: "{{ app_server_url }}/EJ2APIServices.tar.gz"
+    dest: /tmp/EJ2APIServices.tar.gz
+  become: true
+
+- name: Extract EJ2APIServices archive
+  ansible.builtin.unarchive:
+    src: /tmp/EJ2APIServices.tar.gz
+    dest: "{{ app_home }}/EJ2APIServices/"
+    remote_src: yes
+  become: true
+
+- name: Copy systemd service files
+  ansible.builtin.copy:
+    src: "{{ app_home }}/files/{{ item }}"
+    dest: "/etc/systemd/system/{{ item }}"
+    mode: '0644'
+    remote_src: true
+  loop:
+    - rn3bp-ej2apiservices.service
+  become: true
+
+- name: Set correct file permissions
+  ansible.builtin.file:
+    path: "{{ app_home }}/{{ item }}"
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: '0755'
+    recurse: true
+  loop:
+    - EJ2APIServices
+  become: true
+
+- name: Reload systemd daemon
+  systemd:
+    daemon_reload: yes
+
+- name: Enable and start EJ2APIServices service
+  systemd:
+    name: rn3bp-ej2apiservices
+    state: started
+    enabled: yes

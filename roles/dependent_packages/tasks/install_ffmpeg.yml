@@ -1,0 +1,63 @@
+---
+- name: Install EPEL repository
+  ansible.builtin.yum:
+    name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
+    state: present
+    disable_gpg_check: yes
+  become: true
+
+- name: Install RPM Fusion repositories
+  ansible.builtin.yum:
+    name:
+      - https://download1.rpmfusion.org/free/el/rpmfusion-free-release-9.noarch.rpm
+    state: present
+    disable_gpg_check: yes
+  become: true
+
+- name: Install LADSPA and rubberband
+  become: true
+  block:
+
+    - name: Download LADSPA RPM from Fedora 40
+      ansible.builtin.get_url:
+        url: https://download-ib01.fedoraproject.org/pub/fedora/linux/releases/40/Everything/x86_64/os/Packages/l/ladspa-1.17-4.fc40.x86_64.rpm
+        dest: /tmp/ladspa-1.17-4.fc40.x86_64.rpm
+        mode: '0644'
+
+    - name: Install LADSPA RPM manually
+      ansible.builtin.command:
+        dnf install -y /tmp/ladspa-1.17-4.fc40.x86_64.rpm --nogpgcheck
+
+    - name: Install rubberband
+      ansible.builtin.yum:
+        name: rubberband
+        state: present
+ 
+- name: Install custom libdav1d RPM (Fedora 39)
+  ansible.builtin.get_url:
+    url: https://rpmfind.net/linux/fedora/linux/releases/39/Everything/x86_64/os/Packages/l/libdav1d-1.2.1-2.fc39.x86_64.rpm
+    dest: /tmp/libdav1d.rpm
+    mode: '0644'
+  register: rpm_download
+  until: rpm_download is succeeded
+  retries: 5
+  delay: 10
+
+- name: Install libdav1d package
+  ansible.builtin.yum:
+    name: /tmp/libdav1d.rpm
+    state: present
+    disable_gpg_check: yes
+  become: true
+
+- name: Install FFmpeg and development headers
+  ansible.builtin.yum:
+    name:
+      - ffmpeg
+      - ffmpeg-devel
+    state: present
+  become: true
+
+- name: Clean all yum caches
+  ansible.builtin.command: dnf clean all
+  become: true

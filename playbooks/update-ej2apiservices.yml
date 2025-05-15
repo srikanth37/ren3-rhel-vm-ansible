@@ -1,0 +1,9 @@
+- name: Update EJ2 API Services
+  hosts: local
+  become: true
+  vars_files:
+    - ../inventories/production/group_vars/all.yml
+  roles:
+    - role: update_ej2apiservices
+      vars:
+        update: true

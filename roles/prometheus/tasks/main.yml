@@ -1,0 +1,63 @@
+- name: Download Prometheus archive
+  ansible.builtin.get_url:
+    url: https://github.com/prometheus/prometheus/releases/download/v2.52.0/prometheus-2.52.0.linux-amd64.tar.gz
+    dest: /tmp/prometheus.tar.gz
+    mode: '0644'
+
+- name: Extract Prometheus
+  ansible.builtin.unarchive:
+    src: /tmp/prometheus.tar.gz
+    dest: /tmp
+    remote_src: yes
+
+- name: Move Prometheus binary to /usr/local/bin
+  ansible.builtin.copy:
+    src: /tmp/prometheus-2.52.0.linux-amd64/prometheus
+    dest: /usr/local/bin/prometheus
+    mode: '0755'
+    remote_src: yes
+
+- name: Ensure Prometheus directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - /opt/prometheus
+    - /opt/prometheus/data
+
+- name: Deploy Prometheus config to /opt
+  ansible.builtin.template:
+    src: prometheus.yml.j2
+    dest: /opt/prometheus/prometheus.yml
+    mode: '0644'
+
+- name: Deploy Prometheus alert rules to /opt/prometheus
+  ansible.builtin.template:
+    src: alerts.yml.j2
+    dest: /opt/prometheus/alerts.yml
+    mode: '0644'
+
+- name: Create Prometheus systemd unit using /opt
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/prometheus.service
+    content: |
+      [Unit]
+      Description=Prometheus
+      After=network.target
+
+      [Service]
+      ExecStart=/usr/local/bin/prometheus \
+        --config.file=/opt/prometheus/prometheus.yml \
+        --storage.tsdb.path=/opt/prometheus/data
+      Restart=always
+
+      [Install]
+      WantedBy=multi-user.target
+
+- name: Reload and start Prometheus
+  ansible.builtin.systemd:
+    daemon_reload: true
+    name: prometheus
+    enabled: true
+    state: restarted

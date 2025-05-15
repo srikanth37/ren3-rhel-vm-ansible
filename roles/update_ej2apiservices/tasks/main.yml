@@ -1,0 +1,51 @@
+---
+- name: Stop the ej2apiservices service
+  systemd:
+    name: "{{ service_name }}"
+    state: stopped
+    daemon_reload: yes
+
+- name: Download EJ2APIServices archive if update is requested
+  when: update | bool
+  block:
+    - name: Download EJ2APIServices archive
+      get_url:
+        url: "{{ archive_url }}"
+        dest: "{{ archive_path }}"
+        mode: '0644'
+
+- name: Backup existing EJ2APIServices directory with human-readable timestamp
+  shell: |
+    timestamp=$(date +%Y-%m-%d_%H-%M-%S)
+    mkdir -p {{ backup_dir }}
+    cp -raf {{ target_dir }} {{ backup_dir }}/ej2apiservices-$timestamp
+  ignore_errors: true
+
+- name: Extract EJ2APIServices archive
+  unarchive:
+    src: "{{ archive_path }}"
+    dest: "{{ target_dir }}"
+    remote_src: yes
+    extra_opts: [--strip-components=0]
+
+- name: Set ownership to appadmin
+  file:
+    path: "{{ target_dir }}"
+    state: directory
+    recurse: yes
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+
+- name: Enable and start the ej2apiservices service
+  systemd:
+    name: "{{ service_name }}"
+    enabled: yes
+    state: started
+    daemon_reload: yes
+
+- name: Wait for port 6003 to be open
+  wait_for:
+    port: 6003
+    host: 127.0.0.1
+    timeout: 10
+    state: started

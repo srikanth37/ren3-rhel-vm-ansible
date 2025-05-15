@@ -1,0 +1,22 @@
+app_user: app_user_placeholder
+app_group: app_group_placeholder
+app_home: app_home_placeholder
+app_server_url: app_server_url_placeholder
+dotnet_version: dotnet_version_placeholder
+dotnet_dir: dotnet_dir_placeholder
+node_version: node_version_placeholder
+qdrant_storage_dir: qdrant_storage_dir_placeholder
+qdrant_host: qdrant_host_placeholder
+react_app_backend_url: react_app_backend_url_placeholder
+react_app_portal_url: react_app_portal_url_placeholder
+ingestor_url: ingestor_url_placeholder
+server_url: server_url_placeholder
+ej2apiservices_url: ej2apiservices_url_placeholder
+frontend_server_name: frontend_server_name_placeholder
+backend_server_name: backend_server_name_placeholder
+grafana_server_name: grafana_server_name_placeholder
+mariadb_root_password: mariadb_root_password_placeholder
+mariadb_databases:
+  - name: mariadb_database_name_placeholder
+db_hostname: db_hostname_placeholder
+license_key: license_key_placeholder

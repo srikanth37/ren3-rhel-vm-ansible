@@ -1,0 +1,15 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: telegraf
+    static_configs:
+      - targets: ['localhost:9273']
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['localhost:9093']  # Assuming Alertmanager is running on localhost:9093
+
+rule_files:
+  - "/opt/prometheus/alerts.yml"

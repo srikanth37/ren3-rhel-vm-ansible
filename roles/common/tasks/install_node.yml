@@ -1,0 +1,34 @@
+---
+- name: Remove existing Node.js packages
+  dnf:
+    name:
+      - nodejs
+      - nodejs-full-i18n
+    state: absent
+
+- name: Add NodeSource repository
+  shell: curl -fsSL https://rpm.nodesource.com/setup_20.x | bash -
+  args:
+    creates: /etc/yum.repos.d/nodesource.repo
+
+- name: Install Node.js
+  dnf:
+    name: nodejs-20.18.2
+    state: present
+
+- name: Install specific npm version
+  npm:
+    name: npm
+    version: 10.5.0
+    global: yes
+
+- name: Install latest npm
+  npm:
+    name: npm
+    global: yes
+    state: latest
+
+- name: Install PM2 globally
+  npm:
+    name: pm2
+    global: yes

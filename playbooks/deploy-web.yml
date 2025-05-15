@@ -1,0 +1,19 @@
+---
+- name: Deploy Web Components
+  hosts: local
+  become: yes
+  vars_files:
+    - ../inventories/production/group_vars/all.yml
+
+  tasks:
+    - name: Include common role
+      include_role:
+        name: common
+
+    - name: Include web role
+      include_role:
+        name: web
+
+    - name: Include nginx role
+      include_role:
+        name: nginx

@@ -1,0 +1,16 @@
+[server]
+http_port = 8080
+http_addr = 0.0.0.0
+domain = localhost
+
+[database]
+type = sqlite3
+path = /var/lib/grafana/grafana.db
+
+[security]
+admin_password = admin
+
+[paths]
+logs = /opt/grafana/log
+data = /opt/grafana/data
+provisioning = /opt/grafana/provisioning

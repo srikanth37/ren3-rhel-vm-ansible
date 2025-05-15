@@ -1,0 +1,8 @@
+---
+update: false
+client: ""
+archive_url_base: "https://apps.ren3.ai/downloads/rhel"
+archive_path: "{{ app_home }}/files/web.tar.gz"
+target_dir: "{{ app_home }}/web"
+config_dir: "{{ app_home }}/rn3-data/configs/web"
+service_name: "rn3bp-web.service"

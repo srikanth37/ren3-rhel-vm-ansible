@@ -1,0 +1,61 @@
+[[inputs.cpu]]
+  percpu = true
+  totalcpu = true
+  collect_cpu_time = false
+  report_active = false
+  interval = "10s"
+
+[[inputs.mem]]
+  interval = "10s"
+
+[[inputs.disk]]
+  interval = "10s"
+  ignore_fs = ["tmpfs", "devtmpfs", "devfs"]
+
+[[inputs.diskio]]
+  interval = "10s"
+
+[[inputs.swap]]
+  interval = "10s"
+
+[[inputs.http_response]]
+  name_override = "web_healthcheck"
+  urls = ["http://localhost:3000/healthcheck"]
+  response_timeout = "5s"
+  method = "GET"
+  tags = { service = "web" }
+
+[[inputs.http_response]]
+  name_override = "server_healthcheck"
+  urls = ["http://localhost:5000/healthcheck"]
+  response_timeout = "5s"
+  method = "GET"
+  tags = { service = "server" }
+
+[[inputs.http_response]]
+  name_override = "ingestor_healthcheck"
+  urls = ["http://localhost:5001/healthcheck"]
+  response_timeout = "5s"
+  method = "GET"
+  tags = { service = "ingestor" }
+
+[[inputs.http_response]]
+  name_override = "ej2apiservices_healthcheck"
+  urls = ["http://localhost:6003/healthcheck"]
+  response_timeout = "5s"
+  method = "GET"
+  tags = { service = "ej2apiservices" }
+
+[[inputs.http]]
+  urls = ["http://localhost:6333/metrics"]
+  data_format = "prometheus"
+  name_override = "qdrant"
+  tags = { service = "qdrant" }
+
+[[inputs.mysql]]
+  servers = ["root:{{ mariadb_root_password }}@tcp(127.0.0.1:3306)/"]
+  interval = "10s"
+  tags = { service = "mariadb" }
+
+[[outputs.prometheus_client]]
+  listen = ":9273"

@@ -1,0 +1,9 @@
+---
+- name: Install GraphicsMagick
+  import_tasks: install_gm.yml
+
+- name: Install LibreOffice
+  import_tasks: install_libreoffice.yml
+
+- name: Install FFmpeg
+  import_tasks: install_ffmpeg.yml

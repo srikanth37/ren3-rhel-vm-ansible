@@ -1,0 +1,59 @@
+---
+- name: Stop and disable the ingestor service
+  systemd:
+    name: "{{ service_name }}"
+    state: stopped
+    enabled: no
+    daemon_reload: yes
+
+- name: Download ingestor archive if update is requested
+  when: update | bool
+  block:
+    - name: Download ingestor archive
+      get_url:
+        url: "{{ archive_url }}"
+        dest: "{{ archive_path }}"
+        mode: '0644'
+
+- name: Backup existing ingestor directory with human-readable timestamp
+  shell: |
+    timestamp=$(date +%Y-%m-%d_%H-%M-%S)
+    mkdir -p {{ backup_dir }}
+    cp -raf {{ target_dir }} {{ backup_dir }}/ingestor-$timestamp
+  ignore_errors: true
+
+- name: Extract new ingestor build
+  unarchive:
+    src: "{{ archive_path }}"
+    dest: "{{ target_dir }}"
+    remote_src: yes
+    extra_opts: [--strip-components=0]
+
+- name: Set ownership to appadmin
+  file:
+    path: "{{ target_dir }}"
+    state: directory
+    recurse: yes
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+
+- name: Enable and start the ingestor service
+  systemd:
+    name: "{{ service_name }}"
+    enabled: yes
+    state: started
+    daemon_reload: yes
+
+- name: Wait for port 5001 to be open
+  wait_for:
+    port: 5001
+    host: 127.0.0.1
+    timeout: 10
+    state: started
+
+- name: Perform healthcheck
+  uri:
+    url: http://localhost:5001/healthcheck
+    method: GET
+    return_content: yes
+    status_code: 200

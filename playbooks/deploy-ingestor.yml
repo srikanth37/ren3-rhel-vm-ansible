@@ -1,0 +1,11 @@
+---
+- name: Deploy Ingestor Components
+  hosts: local
+  become: yes
+  vars_files:
+    - ../inventories/production/group_vars/all.yml
+
+  tasks:
+    - name: Include ingestor role
+      include_role:
+        name: ingestor

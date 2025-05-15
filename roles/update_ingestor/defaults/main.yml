@@ -1,0 +1,7 @@
+---
+update: false
+archive_url: "https://apps.ren3.ai/downloads/rhel/ingestor.tar.gz"
+archive_path: "{{ app_home }}/files/ingestor.tar.gz"
+target_dir: "{{ app_home }}/ingestor"
+backup_dir: "{{ app_home }}/oldfiles"
+service_name: "rn3bp-ingestor.service"

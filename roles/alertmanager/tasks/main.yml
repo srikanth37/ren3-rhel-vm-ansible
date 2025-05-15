@@ -1,0 +1,56 @@
+- name: Download Alertmanager
+  ansible.builtin.get_url:
+    url: "https://github.com/prometheus/alertmanager/releases/download/v0.28.1/alertmanager-0.28.1.linux-amd64.tar.gz"  # Replace with the latest version if necessary
+    dest: "/tmp/alertmanager.tar.gz"
+
+- name: Extract Alertmanager
+  ansible.builtin.unarchive:
+    src: "/tmp/alertmanager.tar.gz"
+    dest: "/tmp/"
+    remote_src: yes
+
+- name: Move Alertmanager binaries to /usr/local/bin
+  ansible.builtin.copy:
+    src: "/tmp/alertmanager-0.28.1.linux-amd64/alertmanager"
+    dest: "/usr/local/bin/alertmanager"
+    mode: '0755'
+    remote_src: yes
+
+- name: Ensure Alertmanager directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - /opt/alertmanager
+    - /opt/alertmanager/data
+
+- name: Deploy Alertmanager config to /opt
+  ansible.builtin.template:
+    src: alertmanager.yml.j2
+    dest: /opt/alertmanager/alertmanager.yml
+    mode: '0644'
+
+- name: Create Alertmanager systemd unit using /opt
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/alertmanager.service
+    content: |
+      [Unit]
+      Description=Alertmanager
+      After=network.target
+
+      [Service]
+      ExecStart=/usr/local/bin/alertmanager \
+        --config.file=/opt/alertmanager/alertmanager.yml \
+        --storage.path=/opt/alertmanager/data
+      Restart=always
+
+      [Install]
+      WantedBy=multi-user.target
+
+- name: Reload and start Alertmanager
+  ansible.builtin.systemd:
+    daemon_reload: true
+    name: alertmanager
+    enabled: true
+    state: restarted

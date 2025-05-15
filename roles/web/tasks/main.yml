@@ -1,0 +1,70 @@
+---
+- name: Download web-main archive
+  ansible.builtin.get_url:
+    url: "{{ app_server_url }}/web-main.tar.gz"
+    dest: /tmp/web-main.tar.gz
+  become: true
+
+- name: Extract web-main archive
+  ansible.builtin.unarchive:
+    src: /tmp/web-main.tar.gz
+    dest: "{{ app_home }}/web/"
+    remote_src: yes
+  become: true
+
+- name: Download web archive
+  ansible.builtin.get_url:
+    url: "{{ app_server_url }}/web.tar.gz"
+    dest: /tmp/web.tar.gz
+  become: true
+
+- name: Extract web archive
+  ansible.builtin.unarchive:
+    src: /tmp/web.tar.gz
+    dest: "{{ app_home }}/web/"
+    remote_src: yes
+  become: true
+
+- name: Run npm install in web directory
+  ansible.builtin.command:
+    cmd: npm install
+    chdir: "{{ app_home }}/web/"
+  become: true
+
+- name: Copy env.js file for web
+  ansible.builtin.template:
+    src: env.js
+    dest: "{{ app_home }}/web/build/config/env.js"
+    mode: '0755'
+  become: true
+
+- name: Set correct file permissions
+  ansible.builtin.file:
+    path: "{{ app_home }}/{{ item }}"
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: '0755'
+    recurse: true
+  loop:
+    - web
+  become: true
+
+- name: Copy systemd service files
+  ansible.builtin.copy:
+    src: "{{ app_home }}/files/{{ item }}"
+    dest: "/etc/systemd/system/{{ item }}"
+    mode: '0644'
+    remote_src: true
+  loop:
+    - rn3bp-web.service
+  become: true
+
+- name: Reload systemd daemon
+  systemd:
+    daemon_reload: yes
+
+- name: Enable and start server service
+  systemd:
+    name: rn3bp-web
+    state: started
+    enabled: yes

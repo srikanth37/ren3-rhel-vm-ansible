@@ -1,0 +1,76 @@
+---
+- name: Download server archive
+  ansible.builtin.get_url:
+    url: "{{ app_server_url }}/server.tar.gz"
+    dest: /tmp/server.tar.gz
+  become: true
+
+- name: Extract server archive
+  ansible.builtin.unarchive:
+    src: /tmp/server.tar.gz
+    dest: "{{ app_home }}/server/"
+    remote_src: yes
+  become: true
+
+- name: Copy .env file for server
+  ansible.builtin.template:
+    src: .env
+    dest: "{{ app_home }}/server/.env"
+    mode: '0755'
+  become: true
+
+- name: Copy systemd service files
+  ansible.builtin.copy:
+    src: "{{ app_home }}/files/{{ item }}"
+    dest: "/etc/systemd/system/{{ item }}"
+    mode: '0644'
+    remote_src: true
+  loop:
+    - rn3bp-server.service
+  become: true
+
+- name: Set correct file permissions
+  ansible.builtin.file:
+    path: "{{ app_home }}/{{ item }}"
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: '0755'
+    recurse: true
+  loop:
+    - server
+  become: true
+
+- name: Reload systemd daemon
+  systemd:
+    daemon_reload: yes
+
+- name: Enable and start server service
+  systemd:
+    name: rn3bp-server
+    state: started
+    enabled: yes
+
+- name: Wait for server service to be available on port 5000
+  ansible.builtin.wait_for:
+    host: "127.0.0.1"
+    port: 5000
+    delay: 5
+    timeout: 60
+
+- name: Trigger database creation via local endpoint
+  ansible.builtin.uri:
+    url: http://localhost:5000/dbcreator/create_db
+    method: GET
+    status_code: 200
+  register: db_creation_response
+
+- name: Show DB creation response
+  ansible.builtin.debug:
+    var: db_creation_response
+
+- name: Restart rn3bp-server service
+  ansible.builtin.systemd:
+    name: rn3bp-server
+    state: restarted
+    enabled: yes
+  become: true

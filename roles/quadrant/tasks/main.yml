@@ -1,0 +1,72 @@
+---
+- name: Install required packages for Docker
+  ansible.builtin.dnf:
+    name:
+      - dnf-plugins-core
+      - yum-utils
+    state: present
+
+- name: Add Docker CE repository
+  ansible.builtin.command: dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+  args:
+    creates: /etc/yum.repos.d/docker-ce.repo
+
+- name: Install Docker
+  ansible.builtin.dnf:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+    state: present
+
+- name: Enable and start Docker service
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Ensure python3 and pip are installed
+  ansible.builtin.dnf:
+    name:
+      - python3
+      - python3-pip
+    state: present
+
+- name: Ensure Docker Python module is installed (for Ansible control)
+  ansible.builtin.pip:
+    name: docker
+    state: present
+
+- name: Create Qdrant storage directory
+  ansible.builtin.file:
+    path: "{{ qdrant_storage_dir }}"
+    state: directory
+    mode: '0755'
+    owner: root
+    group: root
+
+- name: Run Qdrant container
+  become: true
+  ansible.builtin.shell: >
+    docker run -d --name qdrant
+    --restart=always
+    -p 6333:6333
+    -v {{ qdrant_storage_dir }}:/qdrant/storage
+    qdrant/qdrant:latest
+
+- name: Create Qdrant collection 'files1024'
+  ansible.builtin.uri:
+    url: "http://{{ qdrant_host }}:6333/collections/files1024"
+    method: PUT
+    headers:
+      Content-Type: "application/json"
+    body: |
+      {
+        "vectors": {
+          "size": 1024,
+          "distance": "Cosine"
+        }
+      }
+    body_format: json
+    status_code: 200
+  become: false
