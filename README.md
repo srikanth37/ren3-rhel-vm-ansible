@@ -54,8 +54,42 @@ Ensure your EC2 instances allow the following **inbound and outbound** traffic:
 | Alert Manager       | 9094 |
 | Telegraf            | 9273 |
 
-
 🔄 Also ensure outbound traffic is allowed for updates and communication with external services.
+
+## 🌐 Ensure the following URL's should be whitelisted for use
+
+```bash
+https://github.com/prometheus/alertmanager/releases/download/v0.28.1/alertmanager-0.28.1.linux-amd64.tar.gz
+
+https://apps.ren3.ai/downloads/rhel/files.tar.gz​
+
+https://apps.ren3.ai/downloads/rhel/ingestor.tar.gz​
+
+https://apps.ren3.ai/downloads/rhel/web.tar.gz​
+
+https://apps.ren3.ai/downloads/rhel/web-build.tar.gz​
+
+https://apps.ren3.ai/downloads/rhel/server.tar.gz​
+
+https://apps.ren3.ai/downloads/rhel/EJ2APIServices.tar.gz​
+
+http://downloads.sourceforge.net/graphicsmagick/GraphicsMagick-1.3.36.tar.gz
+
+https://apps.ren3.ai/downloads/rhel/LibreOffice_24.8.2_Linux_x86-64_rpm.tar.gz
+
+https://dot.net/v1/dotnet-install.sh
+
+https://dl.grafana.com/oss/release/grafana-9.5.18.linux-amd64.tar.gz
+
+https://downloads.mariadb.com/MariaDB/mariadb_repo_setup
+
+https://github.com/prometheus/prometheus/releases/download/v2.52.0/prometheus-2.52.0.linux-amd64.tar.gz
+
+https://repos.influxdata.com/influxdata-archive.key
+
+https://repos.influxdata.com/rhel/7/x86_64/stable/
+```
+
 
 ## 🛠️ Setup Instructions
 
