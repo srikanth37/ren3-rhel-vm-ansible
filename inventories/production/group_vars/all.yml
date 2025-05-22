@@ -20,3 +20,4 @@ mariadb_databases:
   - name: mariadb_database_name_placeholder
 db_hostname: db_hostname_placeholder
 license_key: license_key_placeholder
+squadcast_url: squadcast_url_placeholder
