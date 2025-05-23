@@ -49,6 +49,69 @@ groups:
         annotations:
           summary: "MariaDB is down"
 
+      - alert: MariaDBMemoryHigh
+        expr: (mysql_memory_used / 1000000000 ) > 0.5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "MariaDB is using more than 0.5GB of memory"
+          description: "Memory usage is above 0.5GB for more than 2 minutes on"
+
+      - alert: MariaDBConnectionsHigh
+        expr: mysql_connections > 100
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "MariaDB connections are high"
+          description: "MariaDB connections are high for more than 2 minutes on"
+
+      - alert: MariaDBAbortedClients
+        expr: rate(mysql_aborted_clients[5m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "MariaDB aborted clients are increasing"
+          description: "MariaDB aborted clients are increasing for more than 2 minutes on"
+
+      - alert: MariaDBTooManySlowQueries
+        expr: rate(mysql_slow_queries[5m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Too many slow queries in MariaDB"
+          description: "Too many slow queries in MariaDB for more than 2 minutes on"
+
+      - alert: MariaDBTooManyThreadsRunning
+        expr: mysql_threads_running > 100
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Too many threads running in MariaDB — possible connection pressure"
+          description: "Too many threads running in MariaDB for more than 2 minutes on"
+
+      - alert: MariaDBHighThreadCacheMissRate
+        expr: rate(mysql_threads_created[5m]) / rate(mysql_connections[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "MariaDB thread cache miss rate is high"
+          description: "MariaDB thread cache miss rate is high for more than 2 minutes on"
+
+      - alert: MariaDBTableLocksWaited
+        expr: rate(mysql_table_locks_waited[5m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "MariaDB table lock waits are high — contention suspected"
+          description: "MariaDB table lock waits are high for more than 2 minutes on"
+
   - name: cpu_alerts
     rules:
       - alert: HighCPUUsage
@@ -81,3 +144,14 @@ groups:
         annotations:
           summary: "High Disk usage detected on"
           description: "Disk usage is above 90% for more than 1 minutes on"
+
+  - name: network_alerts
+    rules:
+      - alert: HighNetworkReceive
+        expr: (process_network_receive_bytes_total / 100000000) > 10
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "VM Unusually high network inbound traffic"
+          description: "VM Unusually high network inbound traffic for more than 1 minutes on"
