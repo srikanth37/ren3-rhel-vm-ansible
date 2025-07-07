@@ -17,3 +17,7 @@
     - name: Include server role
       include_role:
         name: server
+
+    - name: Run curl for dbcreator
+      ansible.builtin.shell: |
+        curl -s http://localhost:5000/dbcreator/create_db
