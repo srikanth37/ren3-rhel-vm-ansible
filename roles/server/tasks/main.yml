@@ -57,17 +57,6 @@
     delay: 5
     timeout: 60
 
-- name: Trigger database creation via local endpoint
-  ansible.builtin.uri:
-    url: http://localhost:5000/dbcreator/create_db
-    method: GET
-    status_code: 200
-  register: db_creation_response
-
-- name: Show DB creation response
-  ansible.builtin.debug:
-    var: db_creation_response
-
 - name: Restart rn3bp-server service
   ansible.builtin.systemd:
     name: rn3bp-server
