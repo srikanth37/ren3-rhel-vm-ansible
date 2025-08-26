@@ -28,6 +28,22 @@
     remote_src: yes
     extra_opts: [--strip-components=0]
 
+- name: Ensure Ansible temp directory exists for appadmin
+  ansible.builtin.file:
+    path: /home/appadmin/.ansible/tmp
+    state: directory
+    owner: appadmin
+    group: appadmin
+    mode: '0700'
+  become: yes
+
+- name: Run npm install for server
+  ansible.builtin.shell:
+    cmd: "npm install"
+    chdir: "{{ app_home }}/server/"
+  become: yes
+  become_user: "{{ app_user }}"
+
 - name: Set ownership to appadmin
   file:
     path: "{{ target_dir }}"
