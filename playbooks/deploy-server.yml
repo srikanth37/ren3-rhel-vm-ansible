@@ -10,9 +10,15 @@
       include_role:
         name: dependent_packages
 
+    - name: Check if MariaDB service exists
+      ansible.builtin.shell: systemctl status mariadb
+      register: mariadb_service
+      ignore_errors: true
+
     - name: Include mariadb role
       include_role:
         name: mariadb
+      when: mariadb_service.rc != 0
 
     - name: Include server role
       include_role:
