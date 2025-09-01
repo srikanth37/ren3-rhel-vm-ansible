@@ -56,10 +56,3 @@
     port: 5000
     delay: 5
     timeout: 60
-
-- name: Restart rn3bp-server service
-  ansible.builtin.systemd:
-    name: rn3bp-server
-    state: restarted
-    enabled: yes
-  become: true
