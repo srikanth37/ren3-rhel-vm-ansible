@@ -21,3 +21,7 @@
     - name: Run curl for dbcreator
       ansible.builtin.shell: |
         curl -s http://localhost:5000/dbcreator/create_db
+      register: curl_result
+      retries: 5
+      delay: 5
+      until: curl_result.rc == 0
