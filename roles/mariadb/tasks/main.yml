@@ -10,6 +10,12 @@
   args:
     creates: /etc/yum.repos.d/mariadb.repo
 
+- name: Disable broken mariadb-maxscale repo after it is added
+  ansible.builtin.command: dnf config-manager --set-disabled mariadb-maxscale
+  become: true
+  ignore_errors: true
+  changed_when: false
+
 - name: Install MariaDB dependencies
   dnf:
     name:
