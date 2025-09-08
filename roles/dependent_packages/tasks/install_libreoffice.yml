@@ -9,7 +9,6 @@
       - libGLU
       - openssl
       - openssl-devel
-      - compat-openssl11
       - nss
       - nss-tools
       - cairo
@@ -18,10 +17,38 @@
     state: present
   become: true
 
+- name: Fetch LibreOffice stable versions directory index
+  ansible.builtin.uri:
+    url: https://download.documentfoundation.org/libreoffice/stable/
+    return_content: yes
+  register: lo_versions_html
+
+- name: Extract all LibreOffice version numbers
+  ansible.builtin.set_fact:
+    lo_versions: "{{ lo_versions_html.content | regex_findall('href=\"([0-9]+\\.[0-9]+\\.[0-9]+)/\"') | sort | unique }}"
+
+- name: Select the latest LibreOffice version
+  ansible.builtin.set_fact:
+    lo_latest: "{{ lo_versions | last }}"
+
+- name: Debug – show detected latest LibreOffice version
+  ansible.builtin.debug:
+    msg: "Latest LibreOffice version = {{ lo_latest }}"
+
+- name: Set LibreOffice tarball filename
+  ansible.builtin.set_fact:
+    lo_tarball: "LibreOffice_{{ lo_latest }}_Linux_x86-64_rpm.tar.gz"
+
+- name: Set LibreOffice download URL and filenames
+  ansible.builtin.set_fact:
+    lo_tarball: "LibreOffice_{{ lo_latest }}_Linux_x86-64_rpm.tar.gz"
+    lo_url: "https://download.documentfoundation.org/libreoffice/stable/{{ lo_latest }}/rpm/x86_64/{{ lo_tarball }}"
+    lo_extract_dir: "/tmp/LibreOffice_{{ lo_latest }}_Linux_x86-64_rpm"
+
 - name: Download LibreOffice archive
   ansible.builtin.get_url:
-    url: https://apps.ren3.ai/downloads/rhel/LibreOffice_24.8.2_Linux_x86-64_rpm.tar.gz
-    dest: /tmp/LibreOffice.tar.gz
+    url: "{{ lo_url }}"
+    dest: "/tmp/LibreOffice.tar.gz"
     mode: '0644'
 
 - name: Extract LibreOffice archive
@@ -30,26 +57,37 @@
     dest: /tmp/
     remote_src: yes
 
-- name: Install LibreOffice RPMs in one transaction
-  shell: >
-    dnf install -y /tmp/LibreOffice_24.8.2.1_Linux_x86-64_rpm/RPMS/*.rpm --nogpgcheck
+- name: Find extracted LibreOffice directory in /tmp
+  ansible.builtin.find:
+    paths: /tmp/
+    patterns: 'LibreOffice_*_Linux_x86-64_rpm'
+    file_type: directory
+  register: extracted_dirs
 
-- name: Set LibreOffice path in .bashrc
+- name: Set extracted LibreOffice directory fact
+  ansible.builtin.set_fact:
+    lo_extract_dir: "{{ extracted_dirs.files[0].path }}"
+
+- name: Install LibreOffice RPMs in one transaction
+  ansible.builtin.shell: >
+    dnf install -y "{{ lo_extract_dir }}/RPMS/"*.rpm --nogpgcheck
+
+- name: Set LibreOffice path in .bashrc for current user
   ansible.builtin.lineinfile:
     path: ~/.bashrc
-    line: 'export PATH="/opt/libreoffice24.8/program/:$PATH"'
+    line: 'export PATH="{{ lo_extract_dir | regex_replace(".*/LibreOffice_(\\d+\\.\\d+).*", "/opt/libreoffice\\1/program") }}:$PATH"'
     insertafter: EOF
   become: true
 
-- name: Reload shell environment
+- name: Reload shell environment for current user
   ansible.builtin.shell: source ~/.bashrc
   args:
     executable: /bin/bash
 
-- name: Clean up LibreOffice archive
+- name: Clean up LibreOffice archive and extracted files
   ansible.builtin.file:
     path: "{{ item }}"
     state: absent
   loop:
-    - /tmp/LibreOffice_24.8.2.1_Linux_x86-64_rpm
+    - "{{ lo_extract_dir }}"
     - /tmp/LibreOffice.tar.gz

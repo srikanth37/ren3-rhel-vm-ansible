@@ -10,37 +10,57 @@
       - freetype-devel
       - libtool
       - ghostscript
+      - xz  # Needed to extract .tar.xz
     state: present
   become: true
 
-- name: Download GraphicsMagick source
+- name: Fetch SourceForge graphicsmagick directory page HTML
+  ansible.builtin.uri:
+    url: https://sourceforge.net/projects/graphicsmagick/files/graphicsmagick/
+    return_content: yes
+  register: sf_html
+
+- name: Extract latest GraphicsMagick version from HTML
+  ansible.builtin.set_fact:
+    gm_version: "{{ (sf_html.content | regex_findall('graphicsmagick/([0-9.]+)/')) | sort | last }}"
+
+- name: Debug - show detected latest version
+  ansible.builtin.debug:
+    msg: "Latest GraphicsMagick version detected: {{ gm_version }}"
+
+- name: Set download URL and filenames
+  ansible.builtin.set_fact:
+    gm_tarball: "GraphicsMagick-{{ gm_version }}.tar.xz"
+    gm_url: "https://downloads.sourceforge.net/project/graphicsmagick/graphicsmagick/{{ gm_version }}/GraphicsMagick-{{ gm_version }}.tar.xz"
+
+- name: Download GraphicsMagick source (.tar.xz)
   ansible.builtin.get_url:
-    url: http://downloads.sourceforge.net/graphicsmagick/GraphicsMagick-1.3.36.tar.gz
-    dest: /tmp/GraphicsMagick-1.3.36.tar.gz
+    url: "{{ gm_url }}"
+    dest: "/tmp/{{ gm_tarball }}"
     mode: '0644'
 
 - name: Extract GraphicsMagick source
   ansible.builtin.unarchive:
-    src: /tmp/GraphicsMagick-1.3.36.tar.gz
+    src: "/tmp/{{ gm_tarball }}"
     dest: /tmp/
     remote_src: yes
 
 - name: Configure GraphicsMagick
   ansible.builtin.command: ./configure --enable-shared
   args:
-    chdir: /tmp/GraphicsMagick-1.3.36
+    chdir: "/tmp/GraphicsMagick-{{ gm_version }}"
   become: true
 
 - name: Compile GraphicsMagick
-  ansible.builtin.shell: |
-    cd /tmp/GraphicsMagick-1.3.36 && make -j$(nproc)
+  ansible.builtin.shell: make -j$(nproc)
+  args:
+    chdir: "/tmp/GraphicsMagick-{{ gm_version }}"
   become: true
-  become_user: root
 
 - name: Install GraphicsMagick
   ansible.builtin.command: make install
   args:
-    chdir: /tmp/GraphicsMagick-1.3.36
+    chdir: "/tmp/GraphicsMagick-{{ gm_version }}"
   become: true
 
 - name: Refresh shared library cache
@@ -51,6 +71,6 @@
   ansible.builtin.file:
     path: "{{ item }}"
     state: absent
-  with_items:
-    - /tmp/GraphicsMagick-1.3.36
-    - /tmp/GraphicsMagick-1.3.36.tar.gz
+  loop:
+    - "/tmp/GraphicsMagick-{{ gm_version }}"
+    - "/tmp/{{ gm_tarball }}"
