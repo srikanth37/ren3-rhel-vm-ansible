@@ -1,3 +1,4 @@
+---
 - name: Gather system facts
   ansible.builtin.setup:
 
@@ -6,6 +7,7 @@
   ansible.builtin.command: dnf config-manager --set-disabled mariadb-maxscale
   become: true
   ignore_errors: true
+  changed_when: false
 
 # EPEL install (dynamic based on RHEL version)
 - name: Install EPEL repository
@@ -13,6 +15,8 @@
     name: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_facts['distribution_major_version'] }}.noarch.rpm"
     state: present
     disable_gpg_check: yes
+    disablerepo:
+     - mariadb-maxscale
   become: true
 
 # RPM Fusion Free
