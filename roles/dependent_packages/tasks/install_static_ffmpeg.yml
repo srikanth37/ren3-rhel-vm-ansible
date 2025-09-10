@@ -1,0 +1,32 @@
+---
+- name: Download static FFmpeg binary (Linux 64-bit)
+  get_url:
+    url: https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz
+    dest: /usr/local/src/ffmpeg.tar.xz
+    mode: '0755'
+  become: true
+
+- name: Extract FFmpeg binary
+  ansible.builtin.unarchive:
+    src: /usr/local/src/ffmpeg.tar.xz
+    dest: /opt/
+    remote_src: yes
+  become: true
+
+- name: Find extracted FFmpeg folder
+  ansible.builtin.find:
+    paths: /opt/
+    patterns: 'ffmpeg-*'
+    file_type: directory
+  register: ffmpeg_folder
+
+- name: Create symlinks for ffmpeg and ffprobe
+  ansible.builtin.file:
+    src: "{{ item }}"
+    dest: "/usr/local/bin/{{ item | basename }}"
+    state: link
+    force: yes
+  loop:
+    - "{{ ffmpeg_folder.files[0].path }}/ffmpeg"
+    - "{{ ffmpeg_folder.files[0].path }}/ffprobe"
+  become: true

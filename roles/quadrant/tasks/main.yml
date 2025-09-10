@@ -19,6 +19,23 @@
       - containerd.io
     state: present
 
+- name: Check if iptables exists
+  stat:
+    path: /usr/sbin/iptables
+  register: iptables_check
+
+- name: Disable Docker iptables usage if iptables not found
+  copy:
+    dest: /etc/docker/daemon.json
+    content: |
+      {
+        "iptables": false
+      }
+    owner: root
+    group: root
+    mode: '0644'
+  when: not iptables_check.stat.exists
+
 - name: Enable and start Docker service
   ansible.builtin.service:
     name: docker

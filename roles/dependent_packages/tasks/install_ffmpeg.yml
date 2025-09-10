@@ -2,24 +2,19 @@
 - name: Gather system facts
   ansible.builtin.setup:
 
-# Optional: Disable broken repo (like mariadb-maxscale) if it exists
 - name: Disable known broken repo (mariadb-maxscale) if present
   ansible.builtin.command: dnf config-manager --set-disabled mariadb-maxscale
   become: true
   ignore_errors: true
   changed_when: false
 
-# EPEL install (dynamic based on RHEL version)
 - name: Install EPEL repository
   ansible.builtin.yum:
     name: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_facts['distribution_major_version'] }}.noarch.rpm"
     state: present
     disable_gpg_check: yes
-    disablerepo:
-     - mariadb-maxscale
   become: true
 
-# RPM Fusion Free
 - name: Install RPM Fusion free repository
   ansible.builtin.yum:
     name: "https://download1.rpmfusion.org/free/el/rpmfusion-free-release-{{ ansible_facts['distribution_major_version'] }}.noarch.rpm"
@@ -27,7 +22,6 @@
     disable_gpg_check: yes
   become: true
 
-# RPM Fusion Nonfree
 - name: Install RPM Fusion nonfree repository
   ansible.builtin.yum:
     name: "https://download1.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-{{ ansible_facts['distribution_major_version'] }}.noarch.rpm"
@@ -35,20 +29,17 @@
     disable_gpg_check: yes
   become: true
 
-
-# Optional: Enable PowerTools for Rocky/Alma/CentOS
 - name: Enable PowerTools repo (CentOS/Rocky/Alma)
   ansible.builtin.command: dnf config-manager --set-enabled powertools
   become: true
   when: ansible_facts['distribution'] in ['AlmaLinux', 'Rocky', 'CentOS']
 
-# Refresh metadata
 - name: Update all repository metadata
   ansible.builtin.command: dnf makecache
   become: true
 
-# Install your required packages (latest available)
-- name: Install multimedia packages
+# ✅ RHEL 10 and above: Install all multimedia packages
+- name: Install multimedia packages (RHEL 10+)
   ansible.builtin.yum:
     name:
       - ladspa
@@ -58,8 +49,13 @@
       - ffmpeg-devel
     state: present
   become: true
+  when: ansible_facts['distribution_major_version'] | int >= 10
 
-# Clean yum/dnf cache
+# ✅ RHEL 9: Install only supported multimedia packages
+- name: Install ffmpeg static binary (RHEL 9) (skip ladspa/rubberband)
+  import_tasks: install_static_ffmpeg.yml
+  when: ansible_facts['distribution_major_version'] | int == 9
+
 - name: Clean yum caches
   ansible.builtin.command: dnf clean all
   become: true
