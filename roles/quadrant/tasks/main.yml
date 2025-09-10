@@ -24,7 +24,7 @@
     path: /usr/sbin/iptables
   register: iptables_check
 
-- name: Disable Docker iptables usage if iptables not found
+- name: Force-disable Docker iptables usage
   copy:
     dest: /etc/docker/daemon.json
     content: |
@@ -34,7 +34,7 @@
     owner: root
     group: root
     mode: '0644'
-  when: not iptables_check.stat.exists
+  #when: not iptables_check.stat.exists
 
 - name: Enable and start Docker service
   ansible.builtin.service:
