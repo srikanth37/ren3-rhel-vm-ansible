@@ -26,7 +26,9 @@ VM Prerequisites:
 CPU: 2core
 RAM: 8GB
 Disk: 50GB root disk, 50GB secondary disk
+This Ansible collection requires RHEL 9 or RHEL 10. You must use one of these supported OS revisions for the playbooks to execute correctly.
 ```
+
 
 Ensure the following are in place before using these playbooks:
 
