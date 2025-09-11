@@ -32,7 +32,6 @@ Disk: 50GB root disk, 50GB secondary disk
 
 Ensure the following are in place before using these playbooks:
 
-
 1.This Ansible collection requires RHEL 9 or RHEL 10. You must use one of these supported OS revisions for the playbooks to execute correctly.
 2. Rhel instance with access to run deployment scripts
 3. Instance should have **Internet connectivity**.
