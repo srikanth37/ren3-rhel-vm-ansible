@@ -1,0 +1,58 @@
+---
+- name: CHROME | Install Google Chrome
+  become: true
+  block:
+    - name: Download Google Chrome .rpm package
+      ansible.builtin.get_url:
+        url: https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm
+        dest: /tmp/google-chrome.rpm
+
+
+    - name: Install Google Chrome
+      ansible.builtin.yum:
+        name: /tmp/google-chrome.rpm
+        state: present
+
+
+
+- name: CHROME | Install specific Chrome for Puppeteer
+  block:
+    - name: Create .npm and .cache directories
+      ansible.builtin.file:
+        path: "/home/{{ app_user }}/{{ item }}"
+        state: directory
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: '0755'
+      become: true
+      loop:
+        - .npm
+        - .cache
+        - .cache/puppeteer
+
+
+    - name: Install puppeteer globally
+      ansible.builtin.npm:
+        name: puppeteer
+        global: true
+        state: present
+      become: true
+
+
+    - name: Install specific Chrome version for Puppeteer
+      ansible.builtin.shell: |
+        sudo -H -u {{ app_user }} bash -lc 'export HOME=/home/{{ app_user }} && cd $HOME && npx puppeteer browsers install chrome@139.0.7258.66'
+      args:
+        creates: "/home/{{ app_user }}/.cache/puppeteer/chrome/linux-139.0.7258.66"
+      become: true
+
+
+    - name: Set correct ownership for Puppeteer cache
+      ansible.builtin.file:
+        path: "/home/{{ app_user }}/.cache/puppeteer"
+        state: directory
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        recurse: true
+        mode: '0755'
+      become: true

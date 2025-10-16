@@ -1,0 +1,43 @@
+---
+- block:
+    - name: FONTS | Install standard RHEL fonts
+      become: true
+      ansible.builtin.yum:
+        name:
+          - liberation-fonts
+          - thai-scalable-fonts-common
+          - thai-scalable-waree-fonts
+        state: present
+
+
+    - name: FONTS | Install TH Sarabun IT๙ font
+      become: true
+      ansible.builtin.unarchive:
+        src: https://computer.ru.ac.th/downloads/1492833638_.zip
+        dest: /usr/share/fonts/
+        remote_src: true
+        creates: /usr/share/fonts/THSarabunIT๙/THSarabunIT.ttf
+
+
+    - name: FONTS | Install PRIMARY TH Sarabun New1 font
+      become: true
+      ansible.builtin.unarchive:
+        src: https://computer.ru.ac.th/downloads/1492833664_.zip
+        dest: /usr/share/fonts/
+        remote_src: true
+        creates: /usr/share/fonts/THSarabunNew1/THSarabunNew.ttf
+
+
+    - name: FONTS | Install TH Fonts pack
+      become: true
+      ansible.builtin.unarchive:
+        src: https://computer.ru.ac.th/downloads/1492833695_.zip
+        dest: /usr/share/fonts/
+        remote_src: true
+        creates: /usr/share/fonts/THFonts/Angsana.ttf
+
+
+    - name: FONTS | Refresh font cache
+      become: true
+      ansible.builtin.command: fc-cache -fv
+      changed_when: false

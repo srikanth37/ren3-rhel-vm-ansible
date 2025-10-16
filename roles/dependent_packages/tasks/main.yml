@@ -7,3 +7,12 @@
 
 - name: Install FFmpeg
   import_tasks: install_ffmpeg.yml
+
+- name: Include Python environment setup tasks
+  ansible.builtin.include_tasks: setup_python.yml
+
+- name: Include Google Chrome installation tasks
+  ansible.builtin.include_tasks: install_chrome.yml
+
+- name: Include font installation tasks
+  ansible.builtin.include_tasks: install_fonts.yml
